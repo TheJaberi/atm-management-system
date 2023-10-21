@@ -3,7 +3,12 @@
 void mainMenu(struct User u)
 {
     int option;
+
+    do {
     system("clear");
+    if(option < 1 || option > 8) {
+        printf("Invalid option! Please try again.\n");
+    }
     printf("\n\n\t\t======= ATM =======\n\n");
     printf("\n\t\t-->> Feel free to choose one of the options below <<--\n");
     printf("\n\t\t[1]- Create a new account\n");
@@ -16,6 +21,8 @@ void mainMenu(struct User u)
     printf("\n\t\t[8]- Exit\n");
     scanf("%d", &option);
 
+    } while (option < 1 || option > 8);
+
     switch (option)
     {
     case 1:
@@ -23,26 +30,26 @@ void mainMenu(struct User u)
         break;
     case 2:
         // student TODO : add your **Update account information** function
-        // here
+        updateAccountInfo(u);
         break;
     case 3:
         // student TODO : add your **Check the details of existing accounts** function
-        // here
+        checkAccountDetails(u);
         break;
     case 4:
         checkAllAccounts(u);
         break;
     case 5:
         // student TODO : add your **Make transaction** function
-        // here
+        makeTransaction(u);
         break;
     case 6:
         // student TODO : add your **Remove existing account** function
-        // here
+        removeAccount(u);
         break;
     case 7:
         // student TODO : add your **Transfer owner** function
-        // here
+        transferOwnership(u);
         break;
     case 8:
         exit(1);
@@ -82,7 +89,7 @@ void initMenu(struct User *u)
             break;
         case 2:
             // student TODO : add your **Registration** function
-            // here
+            registerUser();
             r = 1;
             break;
         case 3:
