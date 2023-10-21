@@ -6,9 +6,6 @@ void mainMenu(struct User u)
 
     do {
     system("clear");
-    if(option < 1 || option > 8) {
-        printf("Invalid option! Please try again.\n");
-    }
     printf("\n\n\t\t======= ATM =======\n\n");
     printf("\n\t\t-->> Feel free to choose one of the options below <<--\n");
     printf("\n\t\t[1]- Create a new account\n");
@@ -75,8 +72,13 @@ void initMenu(struct User *u)
         switch (option)
         {
         case 1:
-            loginMenu(u->name, u->password);
-            if (strcmp(u->password, getPassword(*u)) == 0)
+            loginMenu(u);
+
+            const char *storedPassword = getPassword(*u);
+            // printf("\nEntered Password: %s", u->password);  // Debug print
+            // printf("\nStored Password: %s", storedPassword);  // Debug print
+
+            if (strcmp(u->password, storedPassword) == 0)
             {
                 printf("\n\nPassword Match!");
             }
