@@ -49,6 +49,7 @@ void mainMenu(struct User u)
         transferOwnership(u);
         break;
     case 8:
+        system("clear");
         exit(1);
         break;
     default:
@@ -95,6 +96,7 @@ void initMenu(struct User *u)
             r = 1;
             break;
         case 3:
+            system("clear");
             exit(1);
             break;
         default:

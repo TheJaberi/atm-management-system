@@ -96,44 +96,126 @@ invalid:
     }
 }
 
-void createNewAcc(struct User u)
-{
+
+bool isValidDate(int month, int day, int year) {
+    if(month < 1 || month > 12) return false;
+    if(day < 1 || day > 31) return false;
+    if(year < 1000 || year > 9999) return false;  // Adjust the range as needed
+    return true;
+}
+
+bool isValidCountry(char *country) {
+    for(int i = 0; i < strlen(country); i++) {
+        if(!isalpha(country[i]) && country[i] != ' ') {  // Allowing spaces and alphabets only
+            return false;
+        }
+    }
+    return true;
+}
+
+void createNewAcc(struct User u) {
     struct Record r;
     struct Record cr;
     char userName[50];
     FILE *pf = fopen(RECORDS, "a+");
 
+    if (!pf) {
+        perror("Unable to open the file");
+        return;
+    }
+
 noAccount:
     system("clear");
     printf("\t\t\t===== New record =====\n");
 
-    printf("\nEnter today's date(mm/dd/yyyy):");
-    scanf("%d/%d/%d", &r.deposit.month, &r.deposit.day, &r.deposit.year);
-    printf("\nEnter the account number:");
-    scanf("%d", &r.accountNbr);
+    // Validation for date
+    bool validDate = false;
+    while (!validDate) {
+        printf("\nEnter today's date(mm/dd/yyyy):");
+        int scanResult = scanf("%d/%d/%d", &r.deposit.month, &r.deposit.day, &r.deposit.year);
+        if(scanResult != 3 || !isValidDate(r.deposit.month, r.deposit.day, r.deposit.year)) {
+            printf("Invalid date format. Please enter a valid date.\n");
+            while(getchar() != '\n');  // Clear input buffer
+        } else {
+            validDate = true;
+        }
+    }
 
-    while (getAccountFromFile(pf, userName, &cr))
-    {
-        if (strcmp(userName, u.name) == 0 && cr.accountNbr == r.accountNbr)
-        {
+    // Validation for account number
+    bool validAccountNumber = false;
+    while(!validAccountNumber) {
+        printf("\nEnter the account number:");
+        scanf("%d", &r.accountNbr);
+        if(r.accountNbr <= 0) {
+            printf("Account number cannot be negative or zero. Please enter a valid account number.\n");
+        } else {
+            validAccountNumber = true;
+        }
+    }
+
+    while (getAccountFromFile(pf, userName, &cr)) {
+        if (strcmp(userName, u.name) == 0 && cr.accountNbr == r.accountNbr) {
             printf("✖ This Account already exists for this user\n\n");
             goto noAccount;
         }
     }
-    printf("\nEnter the country:");
-    scanf("%s", r.country);
-    printf("\nEnter the phone number:");
-    scanf("%d", &r.phone);
-    printf("\nEnter amount to deposit: $");
-    scanf("%lf", &r.amount);
-    printf("\nChoose the type of account:\n\t-> saving\n\t-> current\n\t-> fixed01(for 1 year)\n\t-> fixed02(for 2 years)\n\t-> fixed03(for 3 years)\n\n\tEnter your choice:");
-    scanf("%s", r.accountType);
+
+    // Validation for country
+    bool validCountry = false;
+    while(!validCountry) {
+        printf("\nEnter the country:");
+        scanf("%s", r.country);
+        if(strlen(r.country) < 3 || !isValidCountry(r.country)) {
+            printf("Country name should be at least 3 characters long and should not contain symbols.\n");
+        } else {
+            validCountry = true;
+        }
+    }
+
+    // Validation for phone number
+    bool validPhoneNumber = false;
+    while(!validPhoneNumber) {
+        printf("\nEnter the phone number:");
+        scanf("%d", &r.phone);
+        if(r.phone <= 0 || r.phone < 1000000) {  // Making sure phone number is at least 7 digits
+            printf("Please enter a valid phone number with at least 7 digits and not negative.\n");
+        } else {
+            validPhoneNumber = true;
+        }
+    }
+
+    // Validation for deposit amount
+    bool validDeposit = false;
+    while(!validDeposit) {
+        printf("\nEnter amount to deposit: $");
+        scanf("%lf", &r.amount);
+        if(r.amount <= 0) {
+            printf("Deposit amount cannot be negative or zero. Please enter a valid amount.\n");
+        } else {
+            validDeposit = true;
+        }
+    }
+
+    // Validation for account type
+    bool validAccountType = false;
+    while(!validAccountType) {
+        printf("\nChoose the type of account:\n\t-> saving\n\t-> current\n\t-> fixed01(for 1 year)\n\t-> fixed02(for 2 years)\n\t-> fixed03(for 3 years)\n\n\tEnter your choice:");
+        scanf("%s", r.accountType);
+        if(strcmp(r.accountType, "saving") == 0 || strcmp(r.accountType, "current") == 0 || 
+           strcmp(r.accountType, "fixed01") == 0 || strcmp(r.accountType, "fixed02") == 0 || 
+           strcmp(r.accountType, "fixed03") == 0) {
+            validAccountType = true;
+        } else {
+            printf("Invalid account type. Please choose a valid account type.\n");
+        }
+    }
 
     saveAccountToFile(pf, u, r);
 
     fclose(pf);
     success(u);
 }
+
 
 void checkAllAccounts(struct User u)
 {
@@ -166,45 +248,79 @@ void checkAllAccounts(struct User u)
 
 //My code
 
+void toLowerCase(char *str) {
+    for (int i = 0; str[i]; i++) {
+        str[i] = tolower(str[i]);
+    }
+}
+
 void registerUser() {
     struct User newUser;
-    printf("Enter username: ");
-    scanf("%s", newUser.name);
-
-    if(strlen(newUser.name) < 4) {
-        printf("Username should be at least 4 characters long.\n");
-        return;
-    }
-
     FILE *fp = fopen("./data/users.txt", "a+");
     if (fp == NULL) {
         perror("Error opening file");
         return;
     }
 
-    struct User user;
-    while (fscanf(fp, "%d %s %s", &user.id, user.name, user.password) != EOF) {
-        if(strcmp(newUser.name, user.name) == 0) {
+    char lowerCaseNewUser[50];
+    char lowerCaseExistingUser[50];
+
+    // Loop for username
+    bool validUsername = false;
+    while(!validUsername) {
+        printf("Enter username: ");
+        scanf("%s", newUser.name);
+        strcpy(lowerCaseNewUser, newUser.name);
+        toLowerCase(lowerCaseNewUser);
+
+        if(strlen(lowerCaseNewUser) < 4) {
+            printf("Username should be at least 4 characters long.\n");
+            continue;
+        }
+
+        bool usernameExists = false;
+        rewind(fp);  
+        struct User user;
+        while (fscanf(fp, "%d %s %s", &user.id, user.name, user.password) != EOF) {
+            strcpy(lowerCaseExistingUser, user.name);
+            toLowerCase(lowerCaseExistingUser);
+
+            if(strcmp(lowerCaseNewUser, lowerCaseExistingUser) == 0) {
+                usernameExists = true;
+                break;
+            }
+        }
+
+        if(usernameExists) {
             printf("This username already exists. Choose another one.\n");
-            fclose(fp);
-            return;
+        } else {
+            validUsername = true;  // exit the loop if the username is valid
         }
     }
 
-    printf("Enter password: ");
-    scanf("%s", newUser.password);
-    
-    if(strlen(newUser.password) < 6) {
-        printf("Password should be at least 6 characters long.\n");
-        fclose(fp);
-        return;
+    // Loop for password
+    bool validPassword = false;
+    while(!validPassword) {
+        printf("Enter password: ");
+        scanf("%s", newUser.password);
+
+        if(strlen(newUser.password) < 6) {
+            printf("Password should be at least 6 characters long.\n");
+        } else if (strcmp(newUser.name, newUser.password) == 0) {
+            printf("Password should not be the same as the username.\n");
+        } else {
+            validPassword = true;  // exit the loop if the password is valid
+        }
     }
 
-    newUser.id = getNewUserId();  // Assuming a function to generate new unique user IDs
+    newUser.id = getNewUserId();  
     fprintf(fp, "%d %s %s\n", newUser.id, newUser.name, newUser.password);
     fclose(fp);
     printf("User registered successfully!\n");
+    sleep(3);
 }
+
+
 
 int getNewUserId() {
     FILE *fp = fopen("./data/users.txt", "r");
