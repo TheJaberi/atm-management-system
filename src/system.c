@@ -4,7 +4,7 @@ const char *RECORDS = "./data/records.txt";
 
 int getAccountFromFile(FILE *ptr, char name[50], struct Record *r)
 {
-    return fscanf(ptr, "%d %d %s %d %d/%d/%d %s %d %lf %s",
+    return fscanf(ptr, "%d %d %s %d %d/%d/%d %s %ld %lf %s",
                   &r->id,
 		  &r->userId,
 		  name,
@@ -20,7 +20,7 @@ int getAccountFromFile(FILE *ptr, char name[50], struct Record *r)
 
 void saveAccountToFile(FILE *ptr, struct User u, struct Record r)
 {
-    fprintf(ptr, "%d %d %s %d %d/%d/%d %s %d %.2lf %s\n\n",
+    fprintf(ptr, "%d %d %s %d %d/%d/%d %s %ld %.2lf %s\n\n",
             r.id,
 	        u.id,
 	        u.name,
@@ -106,11 +106,29 @@ bool isValidDate(int month, int day, int year) {
 
 bool isValidCountry(char *country) {
     for(int i = 0; i < strlen(country); i++) {
-        if(!isalpha(country[i]) && country[i] != ' ') {  // Allowing spaces and alphabets only
+        if(!isalpha(country[i]) && country[i] != ' ') {
             return false;
         }
     }
     return true;
+}
+
+int getNewRecordId() {
+    FILE *fp = fopen(RECORDS, "r");
+    if (!fp) {
+        perror("Unable to open the file");
+        return 0;
+    }
+
+    struct Record record;
+    int lastId = 0;
+    char userName[50];
+    while (getAccountFromFile(fp, userName, &record)) {
+        lastId = record.id;  // Keep updating lastId until the end of the file to get the last id
+    }
+
+    fclose(fp);
+    return lastId + 1;
 }
 
 void createNewAcc(struct User u) {
@@ -124,11 +142,13 @@ void createNewAcc(struct User u) {
         return;
     }
 
+    r.id = getNewRecordId();
+
 noAccount:
     system("clear");
     printf("\t\t\t===== New record =====\n");
 
-    // Validation for date
+    // Validation for deposit date
     bool validDate = false;
     while (!validDate) {
         printf("\nEnter today's date(mm/dd/yyyy):");
@@ -148,49 +168,60 @@ noAccount:
         scanf("%d", &r.accountNbr);
         if(r.accountNbr <= 0) {
             printf("Account number cannot be negative or zero. Please enter a valid account number.\n");
-        } else {
+        } if(r.accountNbr < 0 || r.accountNbr > 999999999999999) {
+            printf("Please enter a valid account number with at least 7 and at most 15 digits.\n");
+        }else {
             validAccountNumber = true;
+            while (getAccountFromFile(pf, userName, &cr)) {
+                if (strcmp(userName, u.name) == 0 && cr.accountNbr == r.accountNbr) {
+                    printf("✖ This Account already exists for this user\n\n");
+                    validAccountNumber = false;
+                    break;
+                }
+            }
         }
     }
 
-    while (getAccountFromFile(pf, userName, &cr)) {
-        if (strcmp(userName, u.name) == 0 && cr.accountNbr == r.accountNbr) {
-            printf("✖ This Account already exists for this user\n\n");
-            goto noAccount;
-        }
-    }
+    
 
-    // Validation for country
+    // Updated Validation for country
     bool validCountry = false;
     while(!validCountry) {
         printf("\nEnter the country:");
         scanf("%s", r.country);
-        if(strlen(r.country) < 3 || !isValidCountry(r.country)) {
-            printf("Country name should be at least 3 characters long and should not contain symbols.\n");
+        if(strlen(r.country) < 2 || !isValidCountry(r.country)) {
+            printf("Country name should be at least 2 characters long and should not contain symbols.\n");
         } else {
             validCountry = true;
         }
     }
-
-    // Validation for phone number
+    
+    // Updated Validation for phone number
     bool validPhoneNumber = false;
     while(!validPhoneNumber) {
         printf("\nEnter the phone number:");
-        scanf("%d", &r.phone);
-        if(r.phone <= 0 || r.phone < 1000000) {  // Making sure phone number is at least 7 digits
-            printf("Please enter a valid phone number with at least 7 digits and not negative.\n");
+        if(scanf("%ld", &r.phone) != 1) { // Scanf should return the number of successfully scanned items
+            printf("Invalid input. Please enter a valid phone number.\n");
+            while(getchar() != '\n');  // Clear input buffer
+            continue;
+        }
+
+        if(r.phone < 1000000 || r.phone > 999999999999999) {
+            printf("Please enter a valid phone number with at least 7 and at most 15 digits.\n");
         } else {
             validPhoneNumber = true;
         }
     }
 
-    // Validation for deposit amount
+
     bool validDeposit = false;
     while(!validDeposit) {
         printf("\nEnter amount to deposit: $");
         scanf("%lf", &r.amount);
         if(r.amount <= 0) {
             printf("Deposit amount cannot be negative or zero. Please enter a valid amount.\n");
+        } else if(r.amount > 9999999999999999.99) {  // Adjusting according to the desired limit
+        printf("Deposit amount is too large.\n");
         } else {
             validDeposit = true;
         }
@@ -209,12 +240,13 @@ noAccount:
             printf("Invalid account type. Please choose a valid account type.\n");
         }
     }
-
+    
     saveAccountToFile(pf, u, r);
 
     fclose(pf);
     success(u);
 }
+
 
 
 void checkAllAccounts(struct User u)
@@ -231,7 +263,7 @@ void checkAllAccounts(struct User u)
         if (strcmp(userName, u.name) == 0)
         {
             printf("_____________________\n");
-            printf("\nAccount number:%d\nDeposit Date:%d/%d/%d \ncountry:%s \nPhone number:%d \nAmount deposited: $%.2f \nType Of Account:%s\n",
+            printf("\nAccount number:%d\nDeposit Date:%d/%d/%d \ncountry:%s \nPhone number:%ld \nAmount deposited: $%.2f \nType Of Account:%s\n",
                    r.accountNbr,
                    r.deposit.day,
                    r.deposit.month,
@@ -391,7 +423,7 @@ void updateAccountInfo(struct User u) {
         scanf("%s", records[accountId].country);  // update the country in the record
     } else if (choice == 2) {
         printf("Enter new phone number: ");
-        scanf("%d", &records[accountId].phone);  // update the phone number in the record
+        scanf("%ld", &records[accountId].phone);  // update the phone number in the record
     } else {
         printf("Invalid choice!\n");
         return;
@@ -443,7 +475,7 @@ void checkAccountDetails(struct User u) {
     // Print account details
     printf("Account ID: %d\n", record.accountNbr);
     printf("Country: %s\n", record.country);
-    printf("Phone number: %d\n", record.phone);
+    printf("Phone number: %ld\n", record.phone);
     printf("Amount deposited: $%.2lf\n", record.amount);
     printf("Account type: %s\n", record.accountType);
 

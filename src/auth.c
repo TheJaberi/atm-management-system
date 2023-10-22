@@ -47,6 +47,10 @@ const char *getPassword(struct User u)
 
     while (fscanf(fp, "%d %s %s", &userChecker.id, userChecker.name, userChecker.password) != EOF)
     {
+        // Convert the read username to lowercase
+        for(int i = 0; u.name[i]; i++) {
+            u.name[i] = tolower(u.name[i]);
+        }
 
         if (strcmp(userChecker.name, u.name) == 0)
         {
