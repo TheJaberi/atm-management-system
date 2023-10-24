@@ -698,3 +698,9 @@ void transferOwnership(struct User u) {
 
     printf("Ownership transferred successfully!\n");
 }
+
+// This function is used to flush the input buffer
+void flushInputBuffer() {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF);  // Keep reading characters until a newline or end-of-file
+}

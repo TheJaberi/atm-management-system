@@ -17,6 +17,7 @@ void mainMenu(struct User u)
     printf("\n\t\t[7]- Transfer ownership\n");
     printf("\n\t\t[8]- Exit\n");
     scanf("%d", &option);
+    flushInputBuffer();
 
     } while (option < 1 || option > 8);
 
@@ -70,6 +71,7 @@ void initMenu(struct User *u)
     while (!r)
     {
         scanf("%d", &option);
+        flushInputBuffer();
         switch (option)
         {
         case 1:
