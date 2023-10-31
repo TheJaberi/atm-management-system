@@ -391,17 +391,28 @@ void updateAccountInfo(struct User u) {
     int totalRecords = 0;
     char userName[50];
     struct Record record;
-    int found = 0;
+    int foundIndex = -1;
 
     while (getAccountFromFile(fp, userName, &record)) {
-        if (record.accountNbr == accountId && strcmp(userName, u.name) == 0) {
-            found = 1;
+    // Convert both user names to lowercase for comparison.
+    for(int i = 0; userName[i]; i++) {
+        userName[i] = tolower(userName[i]);
+    }
+    char tempName[50];
+    strcpy(tempName, u.name);
+    for(int i = 0; tempName[i]; i++) {
+        tempName[i] = tolower(tempName[i]);
+    }
+
+    records[totalRecords] = record;
+        if (record.accountNbr == accountId && strcmp(userName, tempName) == 0) {
+            foundIndex = totalRecords;
         }
-        records[totalRecords++] = record;
+    totalRecords++;
     }
     fclose(fp);
 
-    if (!found) {
+    if (foundIndex == -1) {
         printf("Account not found!\n");
         return;
     }
@@ -413,17 +424,12 @@ void updateAccountInfo(struct User u) {
     int choice;
     scanf("%d", &choice);
 
-    if(choice != 1 && choice != 2) {
-        printf("Invalid choice!\n");
-        return;
-    }
-
     if (choice == 1) {
         printf("Enter new country: ");
-        scanf("%s", records[accountId].country);  // update the country in the record
+        scanf("%s", records[foundIndex].country);  // update the country in the record
     } else if (choice == 2) {
         printf("Enter new phone number: ");
-        scanf("%ld", &records[accountId].phone);  // update the phone number in the record
+        scanf("%ld", &records[foundIndex].phone);  // update the phone number in the record
     } else {
         printf("Invalid choice!\n");
         return;
@@ -443,6 +449,8 @@ void updateAccountInfo(struct User u) {
 
     printf("Account information updated successfully!\n");
 }
+
+
 
 void checkAccountDetails(struct User u) {
     int accountId;
@@ -464,8 +472,11 @@ void checkAccountDetails(struct User u) {
             found = 1;
             break;
         }
+        printf("Debug: Read accountNbr=%d for user %s\n", record.accountNbr, userName);
     }
     fclose(fp);
+
+    
 
     if (!found) {
         printf("Account not found!\n");
