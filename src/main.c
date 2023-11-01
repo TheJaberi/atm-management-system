@@ -4,59 +4,54 @@ void mainMenu(struct User u)
 {
     int option;
 
-    do {
-    system("clear");
-    printf("\n\n\t\t======= ATM =======\n\n");
-    printf("\n\t\t-->> Feel free to choose one of the options below <<--\n");
-    printf("\n\t\t[1]- Create a new account\n");
-    printf("\n\t\t[2]- Update account information\n");
-    printf("\n\t\t[3]- Check accounts\n");
-    printf("\n\t\t[4]- Check list of owned account\n");
-    printf("\n\t\t[5]- Make Transaction\n");
-    printf("\n\t\t[6]- Remove existing account\n");
-    printf("\n\t\t[7]- Transfer ownership\n");
-    printf("\n\t\t[8]- Exit\n");
-    scanf("%d", &option);
-    flushInputBuffer();
-
-    } while (option < 1 || option > 8);
-
-    switch (option)
-    {
-    case 1:
-        createNewAcc(u);
-        break;
-    case 2:
-        // student TODO : add your **Update account information** function
-        updateAccountInfo(u);
-        break;
-    case 3:
-        // student TODO : add your **Check the details of existing accounts** function
-        checkAccountDetails(u);
-        break;
-    case 4:
-        checkAllAccounts(u);
-        break;
-    case 5:
-        // student TODO : add your **Make transaction** function
-        makeTransaction(u);
-        break;
-    case 6:
-        // student TODO : add your **Remove existing account** function
-        removeAccount(u);
-        break;
-    case 7:
-        // student TODO : add your **Transfer owner** function
-        transferOwnership(u);
-        break;
-    case 8:
+    while (1) { // Infinite loop
         system("clear");
-        exit(1);
-        break;
-    default:
-        printf("Invalid operation!\n");
+        printf("\n\n\t\t======= ATM =======\n\n");
+        printf("\n\t\t-->> Feel free to choose one of the options below <<--\n");
+        printf("\n\t\t[1]- Create a new account\n");
+        printf("\n\t\t[2]- Update account information\n");
+        printf("\n\t\t[3]- Check accounts\n");
+        printf("\n\t\t[4]- Check list of owned account\n");
+        printf("\n\t\t[5]- Make Transaction\n");
+        printf("\n\t\t[6]- Remove existing account\n");
+        printf("\n\t\t[7]- Transfer ownership\n");
+        printf("\n\t\t[8]- Exit\n");
+        scanf("%d", &option);
+        flushInputBuffer();
+
+        switch (option)
+        {
+        case 1:
+            createNewAcc(u);
+            break;
+        case 2:
+            updateAccountInfo(u);
+            break;
+        case 3:
+            checkAccountDetails(u);
+            break;
+        case 4:
+            checkAllAccounts(u);
+            break;
+        case 5:
+            makeTransaction(u);
+            break;
+        case 6:
+            removeAccount(u);
+            break;
+        case 7:
+            transferOwnership(u);
+            break;
+        case 8:
+            system("clear");
+            exit(1);
+            break;
+        default:
+            printf("Invalid operation!\n");
+        }
     }
-};
+}
+
 
 void initMenu(struct User *u)
 {
