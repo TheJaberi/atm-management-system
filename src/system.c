@@ -466,6 +466,9 @@ void updateAccountInfo(struct User u)
         totalRecords = 0;
         while (getAccountFromFile(fp, userName, &record))
         {
+            strcpy(record.name, userName); // Store the user's name in the record
+            records[totalRecords] = record;
+
             // Convert both user names to lowercase for comparison.
             for (int i = 0; userName[i]; i++)
             {
@@ -478,13 +481,13 @@ void updateAccountInfo(struct User u)
                 tempName[i] = tolower(tempName[i]);
             }
 
-            records[totalRecords] = record;
             if (record.accountNbr == accountId && strcmp(userName, tempName) == 0)
             {
                 foundIndex = totalRecords;
             }
             totalRecords++;
         }
+        fclose(fp);
     }
 
     printf("Select the field to update:\n");
@@ -510,7 +513,7 @@ void updateAccountInfo(struct User u)
         return;
     }
 
-    // write the updated records back to the file
+    // Write the entire array back to the file
     fp = fopen(RECORDS, "w");
     if (fp == NULL)
     {
@@ -520,7 +523,12 @@ void updateAccountInfo(struct User u)
 
     for (int i = 0; i < totalRecords; i++)
     {
-        saveAccountToFile(fp, u, records[i]);
+        struct User tempUser; // Temporary User to pass the correct name to saveAccountToFile
+        strcpy(tempUser.name, records[i].name);
+        tempUser.id = records[i].userId; // Assuming you have a userId field
+        // ... copy other necessary User fields ...
+
+        saveAccountToFile(fp, tempUser, records[i]);
     }
     fclose(fp);
 
@@ -714,6 +722,7 @@ void removeAccount(struct User u)
     }
 
     struct Record records[100]; // assuming a maximum of 100 records for simplicity
+    char names[100][50];        // Array to store the names associated with each record
     int totalRecords = 0;
     char userName[50];
     struct Record record;
@@ -723,10 +732,11 @@ void removeAccount(struct User u)
     {
         if (record.accountNbr == accountId && strcmp(userName, u.name) == 0)
         {
-            found = 1; // Marking the account as found but not adding it to the records array, effectively deleting it
-            continue;
+            found = 1; // Account to be removed is found
+            continue;  // Skip adding this record to the array
         }
-        records[totalRecords++] = record; // Add all other records to the array
+        strcpy(names[totalRecords], userName); // Store the user's name in the names array
+        records[totalRecords++] = record;
     }
     fclose(fp);
 
@@ -734,6 +744,12 @@ void removeAccount(struct User u)
     {
         printf("Account not found!\n");
         return;
+    }
+
+    // Adjust the record numbers to be sequential
+    for (int i = 0; i < totalRecords; i++)
+    {
+        records[i].id = i + 1;
     }
 
     // Rewrite the records.txt file without the deleted account
@@ -746,7 +762,11 @@ void removeAccount(struct User u)
 
     for (int i = 0; i < totalRecords; i++)
     {
-        saveAccountToFile(fp, u, records[i]);
+        struct User tempUser; // Temporary User to pass the correct name to saveAccountToFile
+        strcpy(tempUser.name, names[i]);
+        tempUser.id = records[i].userId;
+
+        saveAccountToFile(fp, tempUser, records[i]);
     }
     fclose(fp);
 
@@ -756,64 +776,108 @@ void removeAccount(struct User u)
 void transferOwnership(struct User u)
 {
     int accountId;
+    char input[50]; // Buffer for account ID input
     char newOwnerName[50];
-    printf("Enter the account ID you want to transfer: ");
-    scanf("%d", &accountId);
-    printf("Enter the username of the new owner: ");
-    scanf("%s", newOwnerName);
-
-    FILE *fp = fopen(RECORDS, "r");
-    if (fp == NULL)
-    {
-        printf("Error opening file!\n");
-        return;
-    }
-
     struct Record records[100]; // assuming a maximum of 100 records for simplicity
+    char names[100][50];        // Array to store the names associated with each record
     int totalRecords = 0;
-    char userName[50];
-    struct Record record;
+    FILE *fp;
     int found = 0;
-    struct User newOwner;
 
-    // Check if the new owner exists
-    FILE *userFile = fopen("./data/users.txt", "r");
-    while (fscanf(userFile, "%d %s %s", &newOwner.id, newOwner.name, newOwner.password) != EOF)
+    while (1) // Infinite loop for account ID input
     {
-        if (strcmp(newOwner.name, newOwnerName) == 0)
+        printf("Enter the account ID you want to transfer or \\back to return: ");
+        scanf("%s", input);
+
+        if (strcmp(input, "\\back") == 0)
         {
-            found = 1;
-            break;
+            return; // Exit the function if user types \back
+        }
+
+        accountId = atoi(input); // Convert input to an integer
+
+        fp = fopen(RECORDS, "r");
+        if (fp == NULL)
+        {
+            printf("Error opening file!\n");
+            return;
+        }
+
+        struct Record record;
+        totalRecords = 0;
+        found = 0;
+        while (getAccountFromFile(fp, names[totalRecords], &record))
+        {
+            records[totalRecords] = record;
+            if (record.accountNbr == accountId && strcmp(names[totalRecords], u.name) == 0)
+            {
+                found = 1; // Account ID found and belongs to the user
+            }
+            totalRecords++;
+        }
+        fclose(fp);
+
+        if (found)
+        {
+            break; // Break the loop if the correct account ID is found
+        }
+        else
+        {
+            printf("Account not found or does not belong to you. Please try again.\n");
         }
     }
-    fclose(userFile);
 
-    if (!found)
+    while (1) // Infinite loop for new owner's username input
     {
-        printf("New owner not found!\n");
-        return;
-    }
+        printf("Enter the username of the new owner: ");
+        scanf("%s", newOwnerName);
 
-    found = 0; // Reset found flag for account search
-    while (getAccountFromFile(fp, userName, &record))
-    {
-        if (record.accountNbr == accountId && strcmp(userName, u.name) == 0)
+        // Prevent transferring to oneself
+        if (strcmp(newOwnerName, u.name) == 0)
         {
-            found = 1;
-            strcpy(record.name, newOwner.name); // Update the owner name in the record
-            record.userId = newOwner.id;        // Update the owner ID in the record
+            printf("You cannot transfer the account to yourself. Please enter a different username.\n");
+            continue; // Skip the rest of the loop and prompt again
         }
-        records[totalRecords++] = record;
-    }
-    fclose(fp);
 
-    if (!found)
-    {
-        printf("Account not found!\n");
-        return;
+        struct User newOwner;
+        FILE *userFile = fopen("./data/users.txt", "r");
+        if (userFile == NULL)
+        {
+            printf("Error opening user file!\n");
+            return;
+        }
+
+        found = 0;
+        while (fscanf(userFile, "%d %s %s", &newOwner.id, newOwner.name, newOwner.password) != EOF)
+        {
+            if (strcmp(newOwner.name, newOwnerName) == 0)
+            {
+                found = 1; // New owner found
+                break;
+            }
+        }
+        fclose(userFile);
+
+        if (found)
+        {
+            for (int i = 0; i < totalRecords; i++)
+            {
+                if (records[i].accountNbr == accountId)
+                {
+                    strcpy(names[i], newOwner.name); // Update the owner name in the names array
+                    records[i].userId = newOwner.id; // Update the owner ID in the record
+                    break;                           // Break the loop once the record is updated
+                }
+            }
+            break; // Break the loop if the new owner is found
+        }
+        else
+        {
+            printf("New owner username not found. Please try again.\n");
+        }
     }
 
-    // Update the records file with the new owner
+    // Write the updated records back to the file
     fp = fopen(RECORDS, "w");
     if (fp == NULL)
     {
@@ -823,7 +887,11 @@ void transferOwnership(struct User u)
 
     for (int i = 0; i < totalRecords; i++)
     {
-        saveAccountToFile(fp, newOwner, records[i]);
+        struct User tempUser; // Temporary User to pass the correct name to saveAccountToFile
+        strcpy(tempUser.name, names[i]);
+        tempUser.id = records[i].userId;
+
+        saveAccountToFile(fp, tempUser, records[i]);
     }
     fclose(fp);
 
