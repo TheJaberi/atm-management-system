@@ -607,39 +607,59 @@ void checkAccountDetails(struct User u)
 void makeTransaction(struct User u)
 {
     int accountId;
-    printf("Enter the account ID for the transaction: ");
-    scanf("%d", &accountId);
-
-    FILE *fp = fopen(RECORDS, "r");
-    if (fp == NULL)
-    {
-        printf("Error opening file!\n");
-        return;
-    }
-
+    char input[50]; // Buffer for account ID input
+    FILE *fp;
     struct Record records[100]; // assuming a maximum of 100 records for simplicity
+    char names[100][50];        // Array to store the names associated with each record
     int totalRecords = 0;
     char userName[50];
     struct Record record;
     int index = -1;
 
-    while (getAccountFromFile(fp, userName, &record))
+    while (1) // Loop for account ID input
     {
-        records[totalRecords] = record;
-        if (record.accountNbr == accountId && strcmp(userName, u.name) == 0)
+        printf("Enter the account ID for the transaction or \\back to return: ");
+        scanf("%s", input);
+
+        if (strcmp(input, "\\back") == 0)
         {
-            index = totalRecords;
+            return; // Exit the function if user types \back
         }
-        totalRecords++;
-    }
-    fclose(fp);
 
-    if (index == -1)
-    {
-        printf("Account not found!\n");
-        return;
+        accountId = atoi(input); // Convert input to an integer
+
+        fp = fopen(RECORDS, "r");
+        if (fp == NULL)
+        {
+            printf("Error opening file!\n");
+            return;
+        }
+
+        totalRecords = 0;
+        index = -1;
+        while (getAccountFromFile(fp, userName, &record))
+        {
+            strcpy(names[totalRecords], userName); // Store the user's name in the names array
+            records[totalRecords] = record;
+            if (record.accountNbr == accountId && strcmp(userName, u.name) == 0)
+            {
+                index = totalRecords;
+            }
+            totalRecords++;
+        }
+        fclose(fp);
+
+        if (index != -1)
+        {
+            break; // Break the loop if the correct account ID is found
+        }
+        else
+        {
+            printf("Account not found. Please try again.\n");
+        }
     }
 
+    // Check if the account is a fixed type and transactions are not allowed
     if (strcmp(records[index].accountType, "fixed01") == 0 ||
         strcmp(records[index].accountType, "fixed02") == 0 ||
         strcmp(records[index].accountType, "fixed03") == 0)
@@ -648,6 +668,7 @@ void makeTransaction(struct User u)
         return;
     }
 
+    // Process transaction
     printf("Select transaction type:\n");
     printf("1. Deposit\n");
     printf("2. Withdraw\n");
@@ -677,6 +698,7 @@ void makeTransaction(struct User u)
         return;
     }
 
+    // Perform the transaction
     if (choice == 1)
     {
         records[index].amount += amount;
@@ -685,13 +707,8 @@ void makeTransaction(struct User u)
     {
         records[index].amount -= amount;
     }
-    else
-    {
-        printf("Invalid choice!\n");
-        return;
-    }
 
-    // Update the records file
+    // Update the specific record in the file
     fp = fopen(RECORDS, "w");
     if (fp == NULL)
     {
@@ -701,7 +718,11 @@ void makeTransaction(struct User u)
 
     for (int i = 0; i < totalRecords; i++)
     {
-        saveAccountToFile(fp, u, records[i]);
+        struct User tempUser; // Temporary User to pass the correct name to saveAccountToFile
+        strcpy(tempUser.name, names[i]);
+        tempUser.id = records[i].userId;
+
+        saveAccountToFile(fp, tempUser, records[i]);
     }
     fclose(fp);
 
