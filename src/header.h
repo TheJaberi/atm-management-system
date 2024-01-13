@@ -41,7 +41,7 @@ const char *getPassword(struct User u);
 void createNewAcc(struct User u);
 void mainMenu(struct User u);
 void checkAllAccounts(struct User u);
-//my code
+// my code
 void registerUser();
 int getNewUserId();
 void updateAccountInfo(struct User u);
@@ -50,4 +50,4 @@ void makeTransaction(struct User u);
 void removeAccount(struct User u);
 void transferOwnership(struct User u);
 void flushInputBuffer();
-
+int getUidFromUsersFile(const char *filename, const char *username);

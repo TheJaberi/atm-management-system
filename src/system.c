@@ -140,6 +140,39 @@ int getNewRecordId()
     return lastId + 1;
 }
 
+int getUidFromUsersFile(const char *filename, const char *username)
+{
+    FILE *file = fopen(filename, "r");
+    if (!file)
+    {
+        perror("Unable to open users file");
+        return -1; // Error opening file
+    }
+
+    struct User user;
+    int found = 0;
+
+    while (fscanf(file, "%d %49s %49s", &user.id, user.name, user.password) == 3)
+    {
+        if (strcmp(user.name, username) == 0)
+        {
+            found = 1;
+            break; // Exit the loop when the user is found
+        }
+    }
+
+    fclose(file);
+
+    if (found)
+    {
+        return user.id; // Return the UID if found
+    }
+    else
+    {
+        return -1; // User not found
+    }
+}
+
 void createNewAcc(struct User u)
 {
     struct Record r;
@@ -154,9 +187,17 @@ void createNewAcc(struct User u)
     }
 
     r.id = getNewRecordId();
+    int uid = getUidFromUsersFile("data/users.txt", u.name);
+    if (uid != -1)
+    {
+        // User found, uid contains the user's ID
+        // printf("User ID for adnan is %d\n", uid);
+        u.id = uid;
+    }
 
 noAccount:
     system("clear");
+    printf("%s", u.name);
     printf("\t\t\t===== New record =====\n");
 
     // Validation for deposit date
