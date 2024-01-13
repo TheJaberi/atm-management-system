@@ -237,9 +237,9 @@ noAccount:
             validAccountNumber = true;
             while (getAccountFromFile(pf, userName, &cr))
             {
-                if (strcmp(userName, u.name) == 0 && cr.accountNbr == r.accountNbr)
+                if (cr.accountNbr == r.accountNbr)
                 {
-                    printf("✖ This Account already exists for this user\n\n");
+                    printf("✖ This Account already exists\n\n");
                     validAccountNumber = false;
                     break;
                 }
