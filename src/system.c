@@ -197,7 +197,7 @@ void createNewAcc(struct User u)
 
 noAccount:
     system("clear");
-    printf("%s", u.name);
+    // printf("%s", u.name);
     printf("\t\t\t===== New record =====\n");
 
     // Validation for deposit date
@@ -235,6 +235,7 @@ noAccount:
         else
         {
             validAccountNumber = true;
+            rewind(pf); // Move the file pointer to the beginning of the file
             while (getAccountFromFile(pf, userName, &cr))
             {
                 if (cr.accountNbr == r.accountNbr)
