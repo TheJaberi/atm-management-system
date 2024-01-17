@@ -4,7 +4,8 @@ void mainMenu(struct User u)
 {
     int option;
 
-    while (1) { // Infinite loop
+    while (1)
+    { // Infinite loop
         system("clear");
         printf("\n\n\t\t======= ATM =======\n\n");
         printf("\n\t\t-->> Feel free to choose one of the options below <<--\n");
@@ -51,7 +52,6 @@ void mainMenu(struct User u)
         }
     }
 }
-
 
 void initMenu(struct User *u)
 {
@@ -105,7 +105,7 @@ void initMenu(struct User *u)
 int main()
 {
     struct User u;
-    
+
     initMenu(&u);
     mainMenu(u);
     return 0;

@@ -78,6 +78,7 @@ void success(struct User u)
     int option;
     printf("\n✔ Success!\n\n");
 invalid:
+    flushInputBuffer();
     printf("Enter 1 to go to the main menu and 0 to exit!\n");
     scanf("%d", &option);
     system("clear");
@@ -519,6 +520,7 @@ void updateAccountInfo(struct User u)
         }
 
         totalRecords = 0;
+        bool found = false;
         while (getAccountFromFile(fp, userName, &record))
         {
             strcpy(record.name, userName); // Store the user's name in the record
@@ -539,10 +541,22 @@ void updateAccountInfo(struct User u)
             if (record.accountNbr == accountId && strcmp(userName, tempName) == 0)
             {
                 foundIndex = totalRecords;
+                found = true;
             }
+            // else
+            // {
+            //     printf("Account not found under your name! Your accounts are:\n");
+            //     sleep(3);
+            //     checkAllAccounts(u);
+            // }
             totalRecords++;
         }
         fclose(fp);
+        if (found == false)
+        {
+            printf("this account does not exist\n");
+            sleep(3);
+        }
     }
 
     printf("Select the field to update:\n");
@@ -558,9 +572,9 @@ void updateAccountInfo(struct User u)
         scanf("%s", records[foundIndex].country);
 
         // Validate country name
-        if (strlen(records[foundIndex].country) < 3 || strlen(records[foundIndex].country) > 99)
+        if (strlen(records[foundIndex].country) < 2 || strlen(records[foundIndex].country) > 99)
         {
-            printf("Invalid country name! Country name should be between 3 and 99 characters.\n");
+            printf("Invalid country name! Country name should be atleast 2 and 99 characters.\n");
             sleep(3);
             return;
         }
@@ -637,91 +651,94 @@ void checkAccountDetails(struct User u)
     int accountId;
     int returnOption;
 
-    do
+    // do
+    // {
+    // system("clear");
+    printf("Enter the account ID you want to check: ");
+    scanf("%d", &accountId);
+
+    FILE *fp = fopen(RECORDS, "r");
+    if (fp == NULL)
     {
-        // system("clear");
-        printf("Enter the account ID you want to check: ");
-        scanf("%d", &accountId);
+        printf("Error opening file!\n");
+        sleep(5);
+        return;
+    }
 
-        FILE *fp = fopen(RECORDS, "r");
-        if (fp == NULL)
+    char userName[50];
+    struct Record record;
+    int found = 0;
+
+    while (getAccountFromFile(fp, userName, &record))
+    {
+        if (record.accountNbr == accountId && strcmp(userName, u.name) == 0)
         {
-            printf("Error opening file!\n");
-            sleep(5);
-            return;
+            found = 1;
+            break;
         }
+        // printf("Debug: Read accountNbr=%d for user %s\n", record.accountNbr, userName);
+    }
+    fclose(fp);
 
-        char userName[50];
-        struct Record record;
-        int found = 0;
+    if (!found)
+    {
+        printf("Account not found under your name! Your accounts are:\n");
+        checkAllAccounts(u);
+        // sleep(5);
+    }
+    else
+    {
+        // Print account details
+        printf("Account ID: %d\n", record.accountNbr);
+        printf("Country: %s\n", record.country);
+        printf("Phone number: %ld\n", record.phone);
+        printf("Amount deposited: $%.2lf\n", record.amount);
+        printf("Account type: %s\n", record.accountType);
 
-        while (getAccountFromFile(fp, userName, &record))
+        double interestAmount = 0.0;
+
+        if (strcmp(record.accountType, "saving") == 0)
         {
-            if (record.accountNbr == accountId && strcmp(userName, u.name) == 0)
-            {
-                found = 1;
-                break;
-            }
-            // printf("Debug: Read accountNbr=%d for user %s\n", record.accountNbr, userName);
+            // Calculate monthly interest
+            interestAmount = (record.amount * 0.07 / 12);
+            printf("You will gain $%.2lf of interest on day 10 of every month.\n", interestAmount);
         }
-        fclose(fp);
-
-        if (!found)
+        else if (strcmp(record.accountType, "fixed01") == 0)
         {
-            printf("Account not found under your name! Your accounts are:\n");
-            checkAllAccounts(u);
-            // sleep(5);
+            // Calculate interest for one year from account creation date
+            int oneYearFromDeposit = record.deposit.year + 1;
+            interestAmount = (record.amount * 0.04);
+            printf("You will gain $%.2lf interest on %02d/%02d/%04d (one year from account creation).\n", interestAmount, record.deposit.month, record.deposit.day, oneYearFromDeposit);
+        }
+        else if (strcmp(record.accountType, "fixed02") == 0)
+        {
+            // Calculate interest for two years from account creation date
+            int twoYearsFromDeposit = record.deposit.year + 2;
+            interestAmount = (record.amount * 0.05 * 2);
+            printf("You will gain $%.2lf interest on %02d/%02d/%04d (two years from account creation).\n", interestAmount, record.deposit.month, record.deposit.day, twoYearsFromDeposit);
+        }
+        else if (strcmp(record.accountType, "fixed03") == 0)
+        {
+            // Calculate interest for three years from account creation date
+            int threeYearsFromDeposit = record.deposit.year + 3;
+            interestAmount = (record.amount * 0.08 * 3);
+            printf("You will gain $%.2lf interest on %02d/%02d/%04d (three years from account creation).\n", interestAmount, record.deposit.month, record.deposit.day, threeYearsFromDeposit);
         }
         else
         {
-            // Print account details
-            printf("Account ID: %d\n", record.accountNbr);
-            printf("Country: %s\n", record.country);
-            printf("Phone number: %ld\n", record.phone);
-            printf("Amount deposited: $%.2lf\n", record.amount);
-            printf("Account type: %s\n", record.accountType);
-
-            double interestAmount = 0.0;
-
-            if (strcmp(record.accountType, "saving") == 0)
-            {
-                // Calculate monthly interest
-                interestAmount = (record.amount * 0.07 / 12);
-                printf("You will gain $%.2lf of interest on day 10 of every month.\n", interestAmount);
-            }
-            else if (strcmp(record.accountType, "fixed01") == 0)
-            {
-                // Calculate interest for one year from account creation date
-                int oneYearFromDeposit = record.deposit.year + 1;
-                interestAmount = (record.amount * 0.04);
-                printf("You will gain $%.2lf interest on %02d/%02d/%04d (one year from account creation).\n", interestAmount, record.deposit.month, record.deposit.day, oneYearFromDeposit);
-            }
-            else if (strcmp(record.accountType, "fixed02") == 0)
-            {
-                // Calculate interest for two years from account creation date
-                int twoYearsFromDeposit = record.deposit.year + 2;
-                interestAmount = (record.amount * 0.05 * 2);
-                printf("You will gain $%.2lf interest on %02d/%02d/%04d (two years from account creation).\n", interestAmount, record.deposit.month, record.deposit.day, twoYearsFromDeposit);
-            }
-            else if (strcmp(record.accountType, "fixed03") == 0)
-            {
-                // Calculate interest for three years from account creation date
-                int threeYearsFromDeposit = record.deposit.year + 3;
-                interestAmount = (record.amount * 0.08 * 3);
-                printf("You will gain $%.2lf interest on %02d/%02d/%04d (three years from account creation).\n", interestAmount, record.deposit.month, record.deposit.day, threeYearsFromDeposit);
-            }
-            else
-            {
-                printf("You will not get interests because the account is of type current\n");
-            }
-
-            // double monthlyInterest = record.amount * interestAmount / 12;
-            // printf("You will get $%.2lf as interest on day %d of every month.\n", monthlyInterest, record.deposit.day);
-
-            printf("\nDo you want to check another account? (Enter 1 to return, any other number to continue): ");
-            scanf("%d", &returnOption);
+            printf("You will not get interests because the account is of type current\n");
         }
-    } while (returnOption != 1);
+
+        sleep(5);
+        return;
+
+        // double monthlyInterest = record.amount * interestAmount / 12;
+        // printf("You will get $%.2lf as interest on day %d of every month.\n", monthlyInterest, record.deposit.day);
+
+        // printf("\nDo you want to check another account? (Enter 1 to return, any other number to continue): ");
+        // scanf("%d", &returnOption);
+    }
+    // } while (returnOption != 1);
 }
 
 void appendToTransactionRecords(const char *line)
@@ -800,14 +817,14 @@ void makeTransaction(struct User u)
     }
 
     // Check if the account is a fixed type and transactions are not allowed
-    if (strcmp(records[index].accountType, "fixed01") == 0 ||
-        strcmp(records[index].accountType, "fixed02") == 0 ||
-        strcmp(records[index].accountType, "fixed03") == 0)
-    {
-        printf("Transactions are not allowed for fixed accounts.\n");
-        sleep(5);
-        return;
-    }
+    // if (strcmp(records[index].accountType, "fixed01") == 0 ||
+    //     strcmp(records[index].accountType, "fixed02") == 0 ||
+    //     strcmp(records[index].accountType, "fixed03") == 0)
+    // {
+    //     printf("Transactions are not allowed for fixed accounts.\n");
+    //     sleep(5);
+    //     return;
+    // }
 
     // Process transaction
     printf("Select transaction type:\n");
@@ -909,9 +926,10 @@ void removeAccount(struct User u)
     }
     fclose(fp);
 
-    if (!found)
+    if (found != 1)
     {
         printf("Account not found!\n");
+        sleep(3);
         return;
     }
 
@@ -940,6 +958,7 @@ void removeAccount(struct User u)
     fclose(fp);
 
     printf("Account removed successfully!\n");
+    sleep(3);
 }
 
 void transferOwnership(struct User u)

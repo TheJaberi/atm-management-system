@@ -10,7 +10,7 @@ void loginMenu(struct User *u)
     system("clear");
     printf("\n\n\n\t\t\t\t   Bank Management System\n\t\t\t\t\t User Login:");
     fgets(u->name, sizeof(u->name), stdin);
-    u->name[strcspn(u->name, "\n")] = 0;  // Remove newline character if present
+    u->name[strcspn(u->name, "\n")] = 0; // Remove newline character if present
 
     // disabling echo
     tcgetattr(fileno(stdin), &oflags);
@@ -25,7 +25,7 @@ void loginMenu(struct User *u)
     }
     printf("\n\n\n\n\n\t\t\t\tEnter the password to login:");
     fgets(u->password, sizeof(u->password), stdin);
-    u->password[strcspn(u->password, "\n")] = 0;  // Remove newline character if present
+    u->password[strcspn(u->password, "\n")] = 0; // Remove newline character if present
 
     // restore terminal
     if (tcsetattr(fileno(stdin), TCSANOW, &oflags) != 0)
@@ -48,14 +48,16 @@ const char *getPassword(struct User u)
     }
 
     // Convert the passed username to lowercase once before the loop
-    for(int i = 0; u.name[i]; i++) {
+    for (int i = 0; u.name[i]; i++)
+    {
         u.name[i] = tolower(u.name[i]);
     }
 
     while (fscanf(fp, "%d %s %s", &userChecker.id, userChecker.name, userChecker.password) != EOF)
     {
         // Convert the read username from the file to lowercase
-        for(int i = 0; userChecker.name[i]; i++) {
+        for (int i = 0; userChecker.name[i]; i++)
+        {
             userChecker.name[i] = tolower(userChecker.name[i]);
         }
 
