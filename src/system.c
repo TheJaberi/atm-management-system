@@ -220,17 +220,24 @@ noAccount:
 
     // Validation for account number
     bool validAccountNumber = false;
+    char accountInput[50];
     while (!validAccountNumber)
     {
         printf("\nEnter the account number:");
-        scanf("%d", &r.accountNbr);
-        if (r.accountNbr <= 0)
+        scanf("%s", accountInput);
+        char *endptr;
+        r.accountNbr = strtod(accountInput, &endptr);
+        if (*endptr != '\0')
+        {
+            printf("Invalid input. Please enter a valid positive number.\n");
+        }
+        else if (r.accountNbr <= 0)
         {
             printf("Account number cannot be negative or zero. Please enter a valid account number.\n");
         }
-        if (r.accountNbr < 0 || r.accountNbr > 999999999999999)
+        else if (r.accountNbr < 0 || r.accountNbr > 999999999999999)
         {
-            printf("Please enter a valid account number with at least 7 and at most 15 digits.\n");
+            printf("Please enter a valid account number with at most 15 digits.\n");
         }
         else
         {
@@ -288,13 +295,19 @@ noAccount:
     }
 
     bool validDeposit = false;
+    char input[100];
     while (!validDeposit)
     {
         printf("\nEnter amount to deposit: $");
-        scanf("%lf", &r.amount);
-        if (r.amount <= 0)
+        scanf("%s", input);
+
+        // Check if the input is a number
+        char *endptr;
+        r.amount = strtod(input, &endptr);
+
+        if (*endptr != '\0' || r.amount <= 0)
         {
-            printf("Deposit amount cannot be negative or zero. Please enter a valid amount.\n");
+            printf("Invalid input. Please enter a valid positive number.\n");
         }
         else if (r.amount > 9999999999999999.99)
         { // Adjusting according to the desired limit
@@ -542,16 +555,57 @@ void updateAccountInfo(struct User u)
     if (choice == 1)
     {
         printf("Enter new country: ");
-        scanf("%s", records[foundIndex].country); // update the country in the record
+        scanf("%s", records[foundIndex].country);
+
+        // Validate country name
+        if (strlen(records[foundIndex].country) < 3 || strlen(records[foundIndex].country) > 99)
+        {
+            printf("Invalid country name! Country name should be between 3 and 99 characters.\n");
+            sleep(3);
+            return;
+        }
+
+        // Check if country name contains any digits
+        for (int i = 0; records[foundIndex].country[i]; i++)
+        {
+            if (isdigit(records[foundIndex].country[i]))
+            {
+                printf("Invalid country name! Country name should not contain any digits.\n");
+                sleep(3);
+                return;
+            }
+        }
     }
     else if (choice == 2)
     {
         printf("Enter new phone number: ");
-        scanf("%ld", &records[foundIndex].phone); // update the phone number in the record
+        scanf("%ld", &records[foundIndex].phone);
+
+        // Validate phone number
+        if (records[foundIndex].phone < 1000000 || records[foundIndex].phone > 999999999999999)
+        {
+            printf("Invalid phone number! Phone number should be a positive number with at least 7 digits.\n");
+            sleep(3);
+            return;
+        }
+
+        // Check if phone number contains any letters
+        char phoneNumberString[20];
+        sprintf(phoneNumberString, "%ld", records[foundIndex].phone);
+        for (int i = 0; phoneNumberString[i]; i++)
+        {
+            if (isalpha(phoneNumberString[i]))
+            {
+                printf("Invalid phone number! Phone number should not contain any letters.\n");
+                sleep(3);
+                return;
+            }
+        }
     }
     else
     {
         printf("Invalid choice!\n");
+        sleep(3);
         return;
     }
 
@@ -560,6 +614,7 @@ void updateAccountInfo(struct User u)
     if (fp == NULL)
     {
         printf("Error opening file!\n");
+        sleep(5);
         return;
     }
 
@@ -669,6 +724,23 @@ void checkAccountDetails(struct User u)
     } while (returnOption != 1);
 }
 
+void appendToTransactionRecords(const char *line)
+{
+    FILE *file = fopen("data/transactionsrecords.txt", "a");
+    if (file == NULL)
+    {
+        // Handle error opening the file
+        printf("Error opening the transaction records file!\n");
+        return;
+    }
+
+    // Append the line to the file
+    fprintf(file, "%s\n", line);
+
+    // Close the file
+    fclose(file);
+}
+
 void makeTransaction(struct User u)
 {
     int accountId;
@@ -688,6 +760,7 @@ void makeTransaction(struct User u)
 
         if (strcmp(input, "\\back") == 0)
         {
+            sleep(3);
             return; // Exit the function if user types \back
         }
 
@@ -697,6 +770,7 @@ void makeTransaction(struct User u)
         if (fp == NULL)
         {
             printf("Error opening file!\n");
+            sleep(5);
             return;
         }
 
@@ -721,6 +795,7 @@ void makeTransaction(struct User u)
         else
         {
             printf("Account not found. Please try again.\n");
+            sleep(3);
         }
     }
 
@@ -730,6 +805,7 @@ void makeTransaction(struct User u)
         strcmp(records[index].accountType, "fixed03") == 0)
     {
         printf("Transactions are not allowed for fixed accounts.\n");
+        sleep(5);
         return;
     }
 
@@ -754,12 +830,14 @@ void makeTransaction(struct User u)
     if (amount <= 0)
     {
         printf("Enter a valid amount.\n");
+        sleep(3);
         return;
     }
 
     if (choice == 2 && records[index].amount < amount)
     {
         printf("Insufficient balance!\n");
+        sleep(3);
         return;
     }
 
@@ -778,6 +856,7 @@ void makeTransaction(struct User u)
     if (fp == NULL)
     {
         printf("Error opening file!\n");
+        sleep(5);
         return;
     }
 
@@ -792,6 +871,10 @@ void makeTransaction(struct User u)
     fclose(fp);
 
     printf("Transaction successful! New balance: $%.2lf\n", records[index].amount);
+    char *Tchoice = (choice == 1) ? "+" : "-";
+    char transaction[95];
+    sprintf(transaction, "%d %s %f", accountId, Tchoice, amount);
+    appendToTransactionRecords(transaction);
 }
 
 void removeAccount(struct User u)
